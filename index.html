@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Doing Words">
+<meta name="theme-color" content="#7c5cbf">
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+<title>Doing Words 🌟</title>
+<link href="https://fonts.googleapis.com/css2?family=Boogaloo&family=Nunito:wght@900&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+:root {
+  --pink:   #ff6b9d;
+  --purple: #7c5cbf;
+  --green:  #27ae60;
+  --red:    #e74c3c;
+  --yellow: #f39c12;
+  --bg:     #f8f0ff;
+  --text:   #1a1a2e;
+}
+
+html, body {
+  height: 100%;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 900;
+  background: var(--bg);
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* ── SPLASH ── */
+#splash {
+  position: fixed; inset: 0; z-index: 999;
+  background: linear-gradient(160deg, #7c5cbf 0%, #e91e8c 100%);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 22px; padding: 30px; text-align: center;
+}
+#splash h1 {
+  font-family: 'Boogaloo', cursive;
+  font-size: clamp(2.6rem, 11vw, 4rem);
+  color: white;
+  text-shadow: 3px 3px 0 rgba(0,0,0,0.2);
+  line-height: 1.15;
+}
+#splash p {
+  color: rgba(255,255,255,0.92);
+  font-size: clamp(1rem, 4vw, 1.2rem);
+  max-width: 300px; line-height: 1.5;
+}
+#startBtn {
+  background: white; color: var(--purple);
+  border: none; border-radius: 50px;
+  padding: 18px 50px;
+  font-family: 'Boogaloo', cursive;
+  font-size: clamp(1.4rem, 6vw, 1.8rem);
+  cursor: pointer;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+  min-height: 60px; min-width: 200px;
+}
+#startBtn:active { transform: scale(0.95); }
+
+#noAudioMsg {
+  display: none;
+  background: rgba(255,255,255,0.18);
+  border-radius: 14px; padding: 10px 18px;
+  color: white; font-size: clamp(0.85rem, 3.5vw, 1rem);
+  max-width: 320px; line-height: 1.4; text-align: center;
+}
+
+/* ── APP ── */
+#app { display: none; min-height: 100vh; }
+
+.container {
+  max-width: 460px; margin: 0 auto;
+  padding: 14px 12px 40px;
+}
+
+.header { text-align: center; margin-bottom: 8px; }
+.logo {
+  font-family: 'Boogaloo', cursive;
+  font-size: clamp(2rem, 9vw, 3rem);
+  color: var(--purple);
+  text-shadow: 2px 2px 0 rgba(124,92,191,0.2);
+}
+
+.stars-row {
+  display: flex; justify-content: center; flex-wrap: wrap;
+  gap: 5px; min-height: 26px; margin: 6px 0;
+}
+.star { font-size: 1.3rem; animation: starPop 0.4s cubic-bezier(0.34,1.56,0.64,1) both; }
+@keyframes starPop { from{transform:scale(0)rotate(-30deg)} to{transform:scale(1)rotate(0)} }
+
+.score-bar { margin: 8px 0; }
+.prog-track { background:#e0d0f5; border-radius:99px; height:10px; overflow:hidden; }
+.prog-fill {
+  height:100%;
+  background: linear-gradient(90deg, var(--pink), var(--purple));
+  border-radius:99px; transition:width 0.4s ease; width:0%;
+}
+.score-label {
+  font-family:'Boogaloo',cursive;
+  font-size:clamp(0.95rem,3.5vw,1.1rem);
+  color:var(--purple); text-align:center; margin-top:4px;
+}
+
+.tabs {
+  display:grid; grid-template-columns:repeat(3,1fr);
+  gap:7px; margin:10px 0;
+}
+.tab {
+  border:3px solid #dcc8f5; border-radius:14px;
+  background:white; color:#888;
+  font-family:'Boogaloo',cursive;
+  font-size:clamp(0.85rem,3.3vw,1rem);
+  padding:10px 4px; min-height:50px; cursor:pointer;
+  line-height:1.3; text-align:center;
+  box-shadow:0 2px 6px rgba(0,0,0,0.06);
+  transition:transform 0.15s;
+  display:flex; align-items:center; justify-content:center;
+}
+.tab:active { transform:scale(0.94); }
+.tab.on { color:white; border-color:transparent; transform:translateY(-2px); box-shadow:0 5px 16px rgba(0,0,0,0.18); }
+.tab:nth-child(1).on { background:linear-gradient(135deg,#ff6b9d,#e91e8c); }
+.tab:nth-child(2).on { background:linear-gradient(135deg,#7c5cbf,#4a2d9e); }
+.tab:nth-child(3).on { background:linear-gradient(135deg,#27ae60,#16a085); }
+
+.card {
+  background:white; border-radius:26px;
+  padding:clamp(18px,5vw,28px);
+  box-shadow:0 8px 36px rgba(124,92,191,0.13);
+  min-height:320px;
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:14px;
+}
+
+.speak-row { width:100%; display:flex; justify-content:center; margin-bottom:4px; }
+.btn-speak {
+  background:linear-gradient(135deg,#7c5cbf,#4a2d9e);
+  color:white; border:none; border-radius:99px;
+  padding:13px 32px; cursor:pointer;
+  font-family:'Boogaloo',cursive;
+  font-size:clamp(1.1rem,4.5vw,1.35rem);
+  display:flex; align-items:center; gap:9px;
+  box-shadow:0 5px 18px rgba(124,92,191,0.38);
+  min-height:52px; min-width:180px;
+  justify-content:center; transition:transform 0.15s;
+}
+.btn-speak:active { transform:scale(0.93); }
+.btn-speak.lit    { background:linear-gradient(135deg,#27ae60,#16a085); }
+.btn-speak.no-audio { background:#aaa; box-shadow:none; }
+
+.big-emoji {
+  font-size:clamp(4.5rem,18vw,7rem);
+  line-height:1; display:block; text-align:center;
+  animation:bob 2s ease-in-out infinite; cursor:pointer;
+}
+@keyframes bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+
+.q-text {
+  font-family:'Boogaloo',cursive;
+  font-size:clamp(1.2rem,5vw,1.55rem);
+  color:var(--text); text-align:center;
+}
+
+.opts { display:grid; grid-template-columns:1fr 1fr; gap:10px; width:100%; }
+.opt {
+  border:3px solid #e0d0f5; border-radius:16px;
+  background:#fdfaff;
+  font-family:'Boogaloo',cursive;
+  font-size:clamp(1.1rem,4.5vw,1.45rem);
+  color:var(--text); cursor:pointer;
+  padding:clamp(14px,4vw,18px) 6px;
+  min-height:58px; text-align:center;
+  transition:transform 0.15s;
+}
+.opt:active:not([disabled]) { transform:scale(0.93); }
+.opt.ok { background:linear-gradient(135deg,#2ecc71,#16a085); border-color:#16a085; color:white; animation:pop 0.35s cubic-bezier(0.34,1.56,0.64,1); }
+.opt.no { background:linear-gradient(135deg,#e74c3c,#c0392b); border-color:#c0392b; color:white; animation:jerk 0.35s ease; }
+@keyframes pop  { 0%{transform:scale(1)} 55%{transform:scale(1.1)} 100%{transform:scale(1)} }
+@keyframes jerk { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-9px)} 70%{transform:translateX(9px)} }
+
+.blanks { display:flex; flex-wrap:wrap; justify-content:center; gap:6px; margin:8px 0; }
+.blank {
+  width:clamp(30px,8vw,40px); height:clamp(34px,9vw,44px);
+  border-bottom:4px solid var(--purple);
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Boogaloo',cursive;
+  font-size:clamp(1.2rem,5vw,1.65rem);
+  color:var(--purple);
+}
+.blank.filled { color:var(--text); }
+.blank.ok-let { color:var(--green); border-color:var(--green); }
+
+.chips { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:10px; }
+.chip {
+  width:clamp(42px,11vw,52px); height:clamp(42px,11vw,52px);
+  border-radius:50%; border:none; color:white; cursor:pointer;
+  font-family:'Boogaloo',cursive;
+  font-size:clamp(1.1rem,4.5vw,1.45rem);
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:0 4px 10px rgba(0,0,0,0.18);
+  min-width:44px; min-height:44px;
+  transition:transform 0.12s;
+}
+.chip:active:not(.used) { transform:scale(0.86)rotate(10deg); }
+.chip.used { opacity:0.25; pointer-events:none; }
+
+.btn-clear {
+  background:#f0e5ff; border:2px solid #c9aaff;
+  border-radius:99px; color:var(--purple);
+  font-family:'Boogaloo',cursive;
+  font-size:clamp(1rem,4vw,1.15rem);
+  padding:10px 28px; cursor:pointer; min-height:44px; margin-top:10px;
+}
+.btn-clear:active { background:#e0ccff; }
+
+.trace-word {
+  font-family:'Boogaloo',cursive;
+  font-size:clamp(2.6rem,9.5vw,4rem);
+  color:#d5c5f0; letter-spacing:5px; display:block; text-align:center;
+}
+.write-inp {
+  width:100%;
+  font-family:'Boogaloo',cursive;
+  font-size:clamp(2rem,7.5vw,3rem);
+  text-align:center; letter-spacing:4px;
+  border:none; border-bottom:5px solid var(--purple);
+  background:transparent; color:var(--text);
+  outline:none; padding:8px 0 4px;
+  caret-color:var(--pink);
+}
+.write-inp::placeholder { color:#ddd; font-size:0.65em; letter-spacing:1px; }
+
+.fb {
+  font-family:'Boogaloo',cursive;
+  font-size:clamp(1.1rem,4.5vw,1.45rem);
+  padding:11px 22px; border-radius:99px; text-align:center;
+  animation:popIn 0.35s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes popIn { from{transform:scale(0.6);opacity:0} to{transform:scale(1);opacity:1} }
+.fb.good { background:#d5f5e3; color:#16a085; }
+.fb.bad  { background:#fef9e7; color:#c0832a; }
+
+#celeb {
+  display:none; position:fixed; inset:0; z-index:200;
+  background:rgba(255,255,255,0.96);
+  flex-direction:column; align-items:center; justify-content:center;
+  gap:20px; padding:30px; text-align:center;
+}
+#celeb.show { display:flex; animation:fadeIn 0.4s ease; }
+@keyframes fadeIn { from{opacity:0} to{opacity:1} }
+.celeb-title {
+  font-family:'Boogaloo',cursive;
+  font-size:clamp(2.4rem,10vw,4rem);
+  color:var(--purple);
+  text-shadow:3px 3px 0 var(--yellow);
+}
+.celeb-msg { font-size:clamp(1rem,4vw,1.25rem); color:#555; font-weight:900; }
+.btn-again {
+  background:linear-gradient(135deg,var(--pink),#c2185b);
+  color:white; border:none; border-radius:99px;
+  padding:17px 46px;
+  font-family:'Boogaloo',cursive;
+  font-size:clamp(1.2rem,5vw,1.5rem);
+  cursor:pointer; min-height:58px;
+  box-shadow:0 6px 22px rgba(255,107,157,0.4);
+}
+.btn-again:active { transform:scale(0.95); }
+
+.slide-in { animation:slideUp 0.32s cubic-bezier(0.34,1.2,0.64,1); }
+@keyframes slideUp { from{opacity:0;transform:translateY(22px)} to{opacity:1;transform:translateY(0)} }
+</style>
+</head>
+<body>
+
+<div id="splash">
+  <h1>🌟 Doing Words 🌟</h1>
+  <p>Tap the button to start playing and hear the words!</p>
+  <button id="startBtn" onclick="startApp()">▶ Let's Play!</button>
+  <div id="noAudioMsg">🔇 Audio not available in this browser.<br>The game will still work — just without sound!</div>
+</div>
+
+<div id="app">
+<div class="container">
+  <div class="header">
+    <div class="logo">🌟 Doing Words 🌟</div>
+  </div>
+  <div class="stars-row" id="starsRow"></div>
+  <div class="score-bar">
+    <div class="prog-track"><div class="prog-fill" id="progFill"></div></div>
+    <div class="score-label" id="scoreLbl">⭐ Score: 0 / 0</div>
+  </div>
+  <div class="tabs">
+    <button class="tab on"  onclick="setMode('quiz')">🎯<br>Picture Quiz</button>
+    <button class="tab"     onclick="setMode('spell')">✏️<br>Spell It</button>
+    <button class="tab"     onclick="setMode('trace')">📝<br>Write It</button>
+  </div>
+  <div class="card" id="card"></div>
+</div>
+</div>
+
+<div id="celeb">
+  <div style="font-size:clamp(2.5rem,10vw,4rem)">🎉🌈🎊<br>🌟✨🎉</div>
+  <div class="celeb-title">Amazing Job!</div>
+  <div class="celeb-msg" id="celebMsg"></div>
+  <button class="btn-again" onclick="restartGame()">Play Again! 🚀</button>
+</div>
+
+<script>
+/* ── SERVICE WORKER REGISTRATION ── */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(r => console.log('SW registered:', r.scope))
+      .catch(e => console.log('SW failed:', e));
+  });
+}
+
+/* ── DATA ── */
+const WORDS = [
+  { word:'swinging', emoji:'🤸' },
+  { word:'reading',  emoji:'📖' },
+  { word:'crying',   emoji:'😢' },
+  { word:'kicking',  emoji:'🦵' },
+  { word:'swimming', emoji:'🏊' },
+  { word:'jumping',  emoji:'🐸' },
+  { word:'laughing', emoji:'😂' },
+  { word:'eating',   emoji:'🍎' },
+];
+const CHIP_COLORS = [
+  '#e91e8c','#7c5cbf','#27ae60','#2980b9',
+  '#e74c3c','#e67e22','#00897b','#8e24aa','#d81b60','#1e88e5'
+];
+
+/* ── SPEECH ── */
+let TTS = null, ttsVoices = [], ttsOK = false;
+
+function initTTS() {
+  try {
+    if (window.speechSynthesis) {
+      TTS = window.speechSynthesis;
+      ttsVoices = TTS.getVoices ? (TTS.getVoices() || []) : [];
+      if (TTS.onvoiceschanged !== undefined) {
+        TTS.onvoiceschanged = () => {
+          ttsVoices = TTS.getVoices ? (TTS.getVoices() || []) : [];
+        };
+      }
+      ttsOK = true;
+    }
+  } catch(e) { ttsOK = false; }
+
+  if (!ttsOK) {
+    const nm = document.getElementById('noAudioMsg');
+    if (nm) nm.style.display = 'block';
+  }
+}
+
+function speak(text, rate) {
+  if (!ttsOK || !TTS) return;
+  try {
+    TTS.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'en-US'; u.rate = rate || 0.85; u.pitch = 1.1; u.volume = 1;
+    const v = ttsVoices.find(v =>
+      v.lang && v.lang.startsWith('en') &&
+      (v.name.includes('Google') || v.name.includes('Female') ||
+       v.name.includes('Samantha') || v.name.includes('Karen'))
+    ) || ttsVoices.find(v => v.lang && v.lang.startsWith('en'));
+    if (v) u.voice = v;
+
+    document.querySelectorAll('.btn-speak').forEach(b => {
+      b.classList.add('lit');
+      const lbl = b.querySelector('.spk-lbl');
+      if (lbl) lbl.textContent = 'Speaking…';
+    });
+    u.onend = u.onerror = () => {
+      document.querySelectorAll('.btn-speak').forEach(b => {
+        b.classList.remove('lit');
+        const lbl = b.querySelector('.spk-lbl');
+        if (lbl) lbl.textContent = 'Hear the Word';
+      });
+    };
+    TTS.speak(u);
+  } catch(e) { ttsOK = false; }
+}
+
+/* ── START ── */
+function startApp() {
+  initTTS();
+  document.getElementById('splash').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  restartGame();
+  if (ttsOK) setTimeout(() => speak("Let's play! What is the doing word?", 0.85), 150);
+}
+
+/* ── STATE ── */
+let mode = 'quiz', queue = [], score = 0, total = 0, stars = 0;
+let current = null, picked = [];
+
+function setMode(m) {
+  mode = m;
+  document.querySelectorAll('.tab').forEach((t,i) =>
+    t.classList.toggle('on', ['quiz','spell','trace'][i] === m));
+  restartGame();
+}
+
+function restartGame() {
+  queue = shuffle([...WORDS]);
+  score = 0; total = 0; stars = 0;
+  document.getElementById('celeb').classList.remove('show');
+  renderStars(); updateScore(); nextQ();
+}
+
+function nextQ() {
+  if (!queue.length) { showCeleb(); return; }
+  current = queue.shift(); total++; updateScore();
+  if      (mode==='quiz')  renderQuiz();
+  else if (mode==='spell') renderSpell();
+  else                     renderTrace();
+}
+
+function speakBtnHTML() {
+  const label = ttsOK ? 'Hear the Word' : 'No Audio 🔇';
+  const cls   = ttsOK ? '' : 'no-audio';
+  return `<div class="speak-row">
+    <button class="btn-speak ${cls}" onclick="speak(current.word,0.8)">
+      <span style="font-size:1.4em">🔊</span>
+      <span class="spk-lbl">${label}</span>
+    </button></div>`;
+}
+
+/* ── QUIZ ── */
+function renderQuiz() {
+  const opts = shuffle([current,...shuffle(WORDS.filter(w=>w.word!==current.word)).slice(0,3)]);
+  document.getElementById('card').innerHTML = `
+    <div class="slide-in" style="width:100%;text-align:center">
+      ${speakBtnHTML()}
+      <span class="big-emoji" onclick="speak(current.word,0.8)">${current.emoji}</span>
+      <p class="q-text">What is the doing word? 🤔</p>
+      <div class="opts">
+        ${opts.map((o,i)=>`<button class="opt" id="opt${i}" onclick="checkQuiz(this,'${o.word}')">${o.word}</button>`).join('')}
+      </div>
+      <div id="fb" style="margin-top:10px"></div>
+    </div>`;
+}
+
+function checkQuiz(btn, chosen) {
+  document.querySelectorAll('.opt').forEach(b=>b.disabled=true);
+  const ok = chosen===current.word;
+  if (ok) {
+    btn.classList.add('ok'); score++; addStar();
+    showFB('✅ Brilliant! '+current.emoji,'good');
+    speak('Brilliant! '+current.word,0.85);
+  } else {
+    btn.classList.add('no');
+    document.querySelectorAll('.opt').forEach(b=>{ if(b.textContent.trim()===current.word) b.classList.add('ok'); });
+    showFB('💛 It is: '+current.word,'bad');
+    speak('The answer is '+current.word,0.85);
+  }
+  updateScore(); setTimeout(nextQ,2200);
+}
+
+/* ── SPELL ── */
+function renderSpell() {
+  const letters = current.word.split('');
+  const extras = shuffle('abcdefghijklmnoprstuvwy'.split('').filter(c=>!letters.includes(c))).slice(0,3);
+  const pool = shuffle([...letters,...extras]);
+  picked = [];
+  document.getElementById('card').innerHTML = `
+    <div class="slide-in" style="width:100%;text-align:center">
+      ${speakBtnHTML()}
+      <span style="font-size:clamp(3rem,13vw,5rem);display:block;margin-bottom:4px;cursor:pointer"
+            onclick="speak(current.word,0.8)">${current.emoji}</span>
+      <p class="q-text">Spell the word! ✏️</p>
+      <div class="blanks" id="blanks">
+        ${letters.map((_,i)=>`<div class="blank" id="bl${i}"></div>`).join('')}
+      </div>
+      <div class="chips">
+        ${pool.map((l,i)=>`<button class="chip" id="ch${i}"
+          style="background:${CHIP_COLORS[i%CHIP_COLORS.length]}"
+          onclick="pickLetter(this,'${l}',${i})">${l}</button>`).join('')}
+      </div>
+      <button class="btn-clear" onclick="clearSpell()">🗑️ Clear</button>
+      <div id="fb" style="margin-top:10px"></div>
+    </div>`;
+}
+
+function pickLetter(btn, letter, idx) {
+  if (btn.classList.contains('used')) return;
+  speak(letter,1.1); btn.classList.add('used');
+  picked.push({letter,idx});
+  const bl=document.getElementById('bl'+(picked.length-1));
+  if (bl){bl.textContent=letter;bl.classList.add('filled');}
+  if (picked.length===current.word.length) {
+    const typed=picked.map(p=>p.letter).join('');
+    if (typed===current.word) {
+      document.querySelectorAll('.blank').forEach(b=>b.classList.add('ok-let'));
+      score++;addStar();showFB('🌟 Perfect!','good');
+      speak('Perfect! '+current.word,0.85);updateScore();setTimeout(nextQ,2200);
+    } else {
+      showFB('💛 Try again!','bad');speak('Try again!',0.9);setTimeout(clearSpell,900);
+    }
+  }
+}
+
+function clearSpell() {
+  picked=[];
+  document.querySelectorAll('.blank').forEach(b=>{b.textContent='';b.classList.remove('filled','ok-let');});
+  document.querySelectorAll('.chip').forEach(b=>b.classList.remove('used'));
+  const fb=document.getElementById('fb');if(fb)fb.innerHTML='';
+}
+
+/* ── WRITE ── */
+function renderTrace() {
+  document.getElementById('card').innerHTML = `
+    <div class="slide-in" style="width:100%;text-align:center">
+      ${speakBtnHTML()}
+      <span style="font-size:clamp(3rem,12vw,4.5rem);display:block;margin-bottom:6px;cursor:pointer;animation:bob 2s ease-in-out infinite"
+            onclick="speak(current.word,0.8)">${current.emoji}</span>
+      <p class="q-text">Copy the word below! 📝</p>
+      <span class="trace-word">${current.word}</span>
+      <input class="write-inp" id="wInp" type="text"
+        placeholder="type here…" autocomplete="off" autocorrect="off"
+        autocapitalize="off" spellcheck="false" inputmode="text"
+        oninput="checkWrite(this.value)">
+      <div id="fb" style="margin-top:10px"></div>
+    </div>`;
+  setTimeout(()=>{const el=document.getElementById('wInp');if(el)el.focus();},400);
+}
+
+function checkWrite(val) {
+  if (val.toLowerCase()===current.word) {
+    const el=document.getElementById('wInp');if(el)el.disabled=true;
+    score++;addStar();showFB('⭐ You got it!','good');
+    speak('You got it! '+current.word,0.85);updateScore();setTimeout(nextQ,2200);
+  }
+}
+
+/* ── HELPERS ── */
+function showFB(msg,type){
+  const el=document.getElementById('fb');
+  if(el)el.innerHTML=`<div class="fb ${type==='good'?'good':'bad'}">${msg}</div>`;
+}
+function addStar(){stars++;renderStars();}
+function renderStars(){
+  const row=document.getElementById('starsRow');row.innerHTML='';
+  for(let i=0;i<Math.min(stars,10);i++){
+    const s=document.createElement('span');
+    s.className='star';s.style.animationDelay=(i*0.06)+'s';s.textContent='⭐';row.appendChild(s);
+  }
+}
+function updateScore(){
+  const pct=total>0?(score/total*100):0;
+  document.getElementById('progFill').style.width=pct+'%';
+  document.getElementById('scoreLbl').textContent=`⭐ Score: ${score} / ${total}`;
+}
+function showCeleb(){
+  const msg=score>=7?'🌟 You are a Superstar!':score>=5?'👍 Very Good Job!':'💪 Keep Practising!';
+  document.getElementById('celebMsg').textContent=`You got ${score} out of ${WORDS.length} correct! ${msg}`;
+  document.getElementById('celeb').classList.add('show');
+  speak(`Amazing! You got ${score} out of ${WORDS.length}! ${score>=6?'You are a Superstar!':'Keep practising!'}`,0.85);
+}
+function shuffle(arr){
+  for(let i=arr.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];
+  }
+  return arr;
+}
+</script>
+</body>
+</html>
